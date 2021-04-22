@@ -9,7 +9,7 @@ const (
 	DEFAULT_PACKET_SIZE = 52
 )
 
-// DefaultOption provides a default option.
+// DefaultOption provides a default opt.
 var DefaultOption = &Option{
 	port:       DEFAULT_PORT,
 	maxHops:    DEFAULT_MAX_HOPS,
@@ -21,76 +21,89 @@ var DefaultOption = &Option{
 
 // TracrouteOption type
 type Option struct {
-	port       int
-	maxHops    int
-	firstHop   int
-	timeoutMs  int
-	retries    int
-	packetSize int
+	port        int
+	maxHops     int
+	firstHop    int
+	timeoutMs   int
+	retries     int
+	packetSize  int
+	resolveHost bool
 }
 
-func (Option *Option) Port() int {
-	if Option.port == 0 {
-		Option.port = DEFAULT_PORT
+func (opt *Option) Port() int {
+	if opt.port == 0 {
+		opt.port = DEFAULT_PORT
 	}
-	return Option.port
+	return opt.port
 }
 
-func (Option *Option) SetPort(port int) {
-	Option.port = port
+func (opt *Option) SetPort(port int) {
+	opt.port = port
 }
 
-func (Option *Option) MaxHops() int {
-	if Option.maxHops == 0 {
-		Option.maxHops = DEFAULT_MAX_HOPS
+func (opt *Option) MaxHops() int {
+	if opt.maxHops == 0 {
+		opt.maxHops = DEFAULT_MAX_HOPS
 	}
-	return Option.maxHops
+	return opt.maxHops
 }
 
-func (Option *Option) SetMaxHops(maxHops int) {
-	Option.maxHops = maxHops
+func (opt *Option) SetMaxHops(maxHops int) {
+	opt.maxHops = maxHops
 }
 
-func (Option *Option) FirstHop() int {
-	if Option.firstHop == 0 {
-		Option.firstHop = DEFAULT_FIRST_HOP
+func (opt *Option) FirstHop() int {
+	if opt.firstHop == 0 {
+		opt.firstHop = DEFAULT_FIRST_HOP
 	}
-	return Option.firstHop
+	return opt.firstHop
 }
 
-func (Option *Option) SetFirstHop(firstHop int) {
-	Option.firstHop = firstHop
+func (opt *Option) SetFirstHop(firstHop int) {
+	opt.firstHop = firstHop
 }
 
-func (Option *Option) TimeoutMs() int {
-	if Option.timeoutMs == 0 {
-		Option.timeoutMs = DEFAULT_TIMEOUT_MS
+func (opt *Option) TimeoutMs() int {
+	if opt.timeoutMs == 0 {
+		opt.timeoutMs = DEFAULT_TIMEOUT_MS
 	}
-	return Option.timeoutMs
+	return opt.timeoutMs
 }
 
-func (Option *Option) SetTimeoutMs(timeoutMs int) {
-	Option.timeoutMs = timeoutMs
+func (opt *Option) SetTimeoutMs(timeoutMs int) {
+	opt.timeoutMs = timeoutMs
 }
 
-func (Option *Option) Retries() int {
-	if Option.retries == 0 {
-		Option.retries = DEFAULT_RETRIES
+func (opt *Option) Retries() int {
+	if opt.retries == 0 {
+		opt.retries = DEFAULT_RETRIES
 	}
-	return Option.retries
+	return opt.retries
 }
 
-func (Option *Option) SetRetries(retries int) {
-	Option.retries = retries
+func (opt *Option) SetRetries(retries int) {
+	opt.retries = retries
 }
 
-func (Option *Option) PacketSize() int {
-	if Option.packetSize == 0 {
-		Option.packetSize = DEFAULT_PACKET_SIZE
+func (opt *Option) PacketSize() int {
+	if opt.packetSize == 0 {
+		opt.packetSize = DEFAULT_PACKET_SIZE
 	}
-	return Option.packetSize
+	return opt.packetSize
 }
 
-func (Option *Option) SetPacketSize(packetSize int) {
-	Option.packetSize = packetSize
+func (opt *Option) SetPacketSize(packetSize int) {
+	opt.packetSize = packetSize
+}
+
+func (opt *Option) ResolveHost() bool {
+	return opt.resolveHost
+}
+
+func (opt *Option) EnableResolveHost() {
+	opt.resolveHost = true
+}
+
+func (opt *Option) DisableResolveHost() {
+	opt.resolveHost = false
 }

@@ -26,14 +26,14 @@ func closeNotify(channels []chan Hop) {
 	}
 }
 
-// Trace uses the given dest (hostname) and options to execute a traceroute
+// Trace uses the given dest (hostname) and option to execute a traceroute
 // from your machine to the remote host.
 //
 // Outbound packets are UDP packets and inbound packets are ICMP.
 //
 // Returns a TracerouteResult which contains an array of hops. Each hop includes
 // the elapsed time and its IP address.
-func Trace(dest string, options *Option, c ...chan Hop) (result TraceResult, err error) {
+func Trace(dest string, opt *Option, c ...chan Hop) (result TraceResult, err error) {
 	result.Hops = []Hop{}
 	destAddr, err := destAddr(dest)
 	result.DestinationAddress = destAddr
@@ -42,10 +42,10 @@ func Trace(dest string, options *Option, c ...chan Hop) (result TraceResult, err
 		return
 	}
 
-	timeoutMs := (int64)(options.TimeoutMs())
+	timeoutMs := (int64)(opt.TimeoutMs())
 	tv := syscall.NsecToTimeval(1000 * 1000 * timeoutMs)
 
-	ttl := options.FirstHop()
+	ttl := opt.FirstHop()
 	retry := 0
 	for {
 		// log.Println("TTL: ", ttl)
@@ -74,19 +74,19 @@ func Trace(dest string, options *Option, c ...chan Hop) (result TraceResult, err
 		}
 
 		// Bind to the local socket to listen for ICMP packets
-		err = syscall.Bind(recvSocket, &syscall.SockaddrInet4{Port: options.Port(), Addr: socketAddr})
+		err = syscall.Bind(recvSocket, &syscall.SockaddrInet4{Port: opt.Port(), Addr: socketAddr})
 		if err != nil {
 			return result, err
 		}
 
 		// Send a single null byte UDP packet
-		err = syscall.Sendto(sendSocket, []byte{0x0}, 0, &syscall.SockaddrInet4{Port: options.Port(), Addr: destAddr})
+		err = syscall.Sendto(sendSocket, []byte{0x0}, 0, &syscall.SockaddrInet4{Port: opt.Port(), Addr: destAddr})
 		if err != nil {
 			syscall.Close(recvSocket)
 			return result, err
 		}
 
-		p := make([]byte, options.PacketSize())
+		p := make([]byte, opt.PacketSize())
 		n, from, err := syscall.Recvfrom(recvSocket, p, 0)
 		syscall.Close(recvSocket)
 		syscall.Close(sendSocket)
@@ -96,11 +96,11 @@ func Trace(dest string, options *Option, c ...chan Hop) (result TraceResult, err
 
 			hop := Hop{Success: true, Address: currAddr, N: n, ElapsedTime: elapsed, TTL: ttl}
 
-			// TODO: this reverse lookup appears to have some standard timeout that is relatively
-			// high. Consider switching to something where there is greater control.
-			currHost, err := net.LookupAddr(hop.AddressString())
-			if err == nil {
-				hop.Host = currHost[0]
+			if opt.ResolveHost() {
+				currHost, err := net.LookupAddr(hop.AddressString())
+				if err == nil {
+					hop.Host = currHost[0]
+				}
 			}
 
 			notify(hop, c)
@@ -110,19 +110,19 @@ func Trace(dest string, options *Option, c ...chan Hop) (result TraceResult, err
 			ttl += 1
 			retry = 0
 
-			if ttl > options.MaxHops() || currAddr == destAddr {
+			if ttl > opt.MaxHops() || currAddr == destAddr {
 				closeNotify(c)
 				return result, nil
 			}
 		} else {
 			retry += 1
-			if retry > options.Retries() {
+			if retry > opt.Retries() {
 				notify(Hop{Success: false, TTL: ttl}, c)
 				ttl += 1
 				retry = 0
 			}
 
-			if ttl > options.MaxHops() {
+			if ttl > opt.MaxHops() {
 				closeNotify(c)
 				return result, nil
 			}
