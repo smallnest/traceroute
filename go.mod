@@ -1,3 +1,3 @@
-module github.com/aeden/traceroute
+module github.com/smallnest/traceroute
 
-go 1.14
+go 1.16

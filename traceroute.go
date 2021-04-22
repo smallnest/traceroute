@@ -3,181 +3,38 @@
 package traceroute
 
 import (
-	"errors"
-	"fmt"
 	"net"
 	"syscall"
 	"time"
 )
 
-const DEFAULT_PORT = 33434
-const DEFAULT_MAX_HOPS = 64
-const DEFAULT_FIRST_HOP = 1
-const DEFAULT_TIMEOUT_MS = 500
-const DEFAULT_RETRIES = 3
-const DEFAULT_PACKET_SIZE = 52
-
-// Return the first non-loopback address as a 4 byte IP address. This address
-// is used for sending packets out.
-func socketAddr() (addr [4]byte, err error) {
-	addrs, err := net.InterfaceAddrs()
-	if err != nil {
-		return
-	}
-
-	for _, a := range addrs {
-		if ipnet, ok := a.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
-			if len(ipnet.IP.To4()) == net.IPv4len {
-				copy(addr[:], ipnet.IP.To4())
-				return
-			}
-		}
-	}
-	err = errors.New("You do not appear to be connected to the Internet")
-	return
-}
-
-// Given a host name convert it to a 4 byte IP address.
-func destAddr(dest string) (destAddr [4]byte, err error) {
-	addrs, err := net.LookupHost(dest)
-	if err != nil {
-		return
-	}
-	addr := addrs[0]
-
-	ipAddr, err := net.ResolveIPAddr("ip", addr)
-	if err != nil {
-		return
-	}
-	copy(destAddr[:], ipAddr.IP.To4())
-	return
-}
-
-// TracrouteOptions type
-type TracerouteOptions struct {
-	port       int
-	maxHops    int
-	firstHop   int
-	timeoutMs  int
-	retries    int
-	packetSize int
-}
-
-func (options *TracerouteOptions) Port() int {
-	if options.port == 0 {
-		options.port = DEFAULT_PORT
-	}
-	return options.port
-}
-
-func (options *TracerouteOptions) SetPort(port int) {
-	options.port = port
-}
-
-func (options *TracerouteOptions) MaxHops() int {
-	if options.maxHops == 0 {
-		options.maxHops = DEFAULT_MAX_HOPS
-	}
-	return options.maxHops
-}
-
-func (options *TracerouteOptions) SetMaxHops(maxHops int) {
-	options.maxHops = maxHops
-}
-
-func (options *TracerouteOptions) FirstHop() int {
-	if options.firstHop == 0 {
-		options.firstHop = DEFAULT_FIRST_HOP
-	}
-	return options.firstHop
-}
-
-func (options *TracerouteOptions) SetFirstHop(firstHop int) {
-	options.firstHop = firstHop
-}
-
-func (options *TracerouteOptions) TimeoutMs() int {
-	if options.timeoutMs == 0 {
-		options.timeoutMs = DEFAULT_TIMEOUT_MS
-	}
-	return options.timeoutMs
-}
-
-func (options *TracerouteOptions) SetTimeoutMs(timeoutMs int) {
-	options.timeoutMs = timeoutMs
-}
-
-func (options *TracerouteOptions) Retries() int {
-	if options.retries == 0 {
-		options.retries = DEFAULT_RETRIES
-	}
-	return options.retries
-}
-
-func (options *TracerouteOptions) SetRetries(retries int) {
-	options.retries = retries
-}
-
-func (options *TracerouteOptions) PacketSize() int {
-	if options.packetSize == 0 {
-		options.packetSize = DEFAULT_PACKET_SIZE
-	}
-	return options.packetSize
-}
-
-func (options *TracerouteOptions) SetPacketSize(packetSize int) {
-	options.packetSize = packetSize
-}
-
-// TracerouteHop type
-type TracerouteHop struct {
-	Success     bool
-	Address     [4]byte
-	Host        string
-	N           int
-	ElapsedTime time.Duration
-	TTL         int
-}
-
-func (hop *TracerouteHop) AddressString() string {
-	return fmt.Sprintf("%v.%v.%v.%v", hop.Address[0], hop.Address[1], hop.Address[2], hop.Address[3])
-}
-
-func (hop *TracerouteHop) HostOrAddressString() string {
-	hostOrAddr := hop.AddressString()
-	if hop.Host != "" {
-		hostOrAddr = hop.Host
-	}
-	return hostOrAddr
-}
-
-// TracerouteResult type
-type TracerouteResult struct {
+// TraceResult type
+type TraceResult struct {
 	DestinationAddress [4]byte
-	Hops               []TracerouteHop
+	Hops               []Hop
 }
 
-func notify(hop TracerouteHop, channels []chan TracerouteHop) {
+func notify(hop Hop, channels []chan Hop) {
 	for _, c := range channels {
 		c <- hop
 	}
 }
 
-func closeNotify(channels []chan TracerouteHop) {
+func closeNotify(channels []chan Hop) {
 	for _, c := range channels {
 		close(c)
 	}
 }
 
-// Traceroute uses the given dest (hostname) and options to execute a traceroute
+// Trace uses the given dest (hostname) and options to execute a traceroute
 // from your machine to the remote host.
 //
 // Outbound packets are UDP packets and inbound packets are ICMP.
 //
 // Returns a TracerouteResult which contains an array of hops. Each hop includes
 // the elapsed time and its IP address.
-func Traceroute(dest string, options *TracerouteOptions, c ...chan TracerouteHop) (result TracerouteResult, err error) {
-	result.Hops = []TracerouteHop{}
+func Trace(dest string, options *Option, c ...chan Hop) (result TraceResult, err error) {
+	result.Hops = []Hop{}
 	destAddr, err := destAddr(dest)
 	result.DestinationAddress = destAddr
 	socketAddr, err := socketAddr()
@@ -191,7 +48,7 @@ func Traceroute(dest string, options *TracerouteOptions, c ...chan TracerouteHop
 	ttl := options.FirstHop()
 	retry := 0
 	for {
-		//log.Println("TTL: ", ttl)
+		// log.Println("TTL: ", ttl)
 		start := time.Now()
 
 		// Set up the socket to receive inbound packets
@@ -206,26 +63,38 @@ func Traceroute(dest string, options *TracerouteOptions, c ...chan TracerouteHop
 			return result, err
 		}
 		// This sets the current hop TTL
-		syscall.SetsockoptInt(sendSocket, 0x0, syscall.IP_TTL, ttl)
+		err = syscall.SetsockoptInt(sendSocket, 0x0, syscall.IP_TTL, ttl)
+		if err != nil {
+			return result, err
+		}
 		// This sets the timeout to wait for a response from the remote host
-		syscall.SetsockoptTimeval(recvSocket, syscall.SOL_SOCKET, syscall.SO_RCVTIMEO, &tv)
-
-		defer syscall.Close(recvSocket)
-		defer syscall.Close(sendSocket)
+		err = syscall.SetsockoptTimeval(recvSocket, syscall.SOL_SOCKET, syscall.SO_RCVTIMEO, &tv)
+		if err != nil {
+			return result, err
+		}
 
 		// Bind to the local socket to listen for ICMP packets
-		syscall.Bind(recvSocket, &syscall.SockaddrInet4{Port: options.Port(), Addr: socketAddr})
+		err = syscall.Bind(recvSocket, &syscall.SockaddrInet4{Port: options.Port(), Addr: socketAddr})
+		if err != nil {
+			return result, err
+		}
 
 		// Send a single null byte UDP packet
-		syscall.Sendto(sendSocket, []byte{0x0}, 0, &syscall.SockaddrInet4{Port: options.Port(), Addr: destAddr})
+		err = syscall.Sendto(sendSocket, []byte{0x0}, 0, &syscall.SockaddrInet4{Port: options.Port(), Addr: destAddr})
+		if err != nil {
+			syscall.Close(recvSocket)
+			return result, err
+		}
 
-		var p = make([]byte, options.PacketSize())
+		p := make([]byte, options.PacketSize())
 		n, from, err := syscall.Recvfrom(recvSocket, p, 0)
+		syscall.Close(recvSocket)
+		syscall.Close(sendSocket)
 		elapsed := time.Since(start)
 		if err == nil {
 			currAddr := from.(*syscall.SockaddrInet4).Addr
 
-			hop := TracerouteHop{Success: true, Address: currAddr, N: n, ElapsedTime: elapsed, TTL: ttl}
+			hop := Hop{Success: true, Address: currAddr, N: n, ElapsedTime: elapsed, TTL: ttl}
 
 			// TODO: this reverse lookup appears to have some standard timeout that is relatively
 			// high. Consider switching to something where there is greater control.
@@ -248,7 +117,7 @@ func Traceroute(dest string, options *TracerouteOptions, c ...chan TracerouteHop
 		} else {
 			retry += 1
 			if retry > options.Retries() {
-				notify(TracerouteHop{Success: false, TTL: ttl}, c)
+				notify(Hop{Success: false, TTL: ttl}, c)
 				ttl += 1
 				retry = 0
 			}

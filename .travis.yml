@@ -1,0 +1,7 @@
+language: go
+
+go:
+  - tip
+  - 1.16.x
+
+script: sudo -E env "PATH=$PATH" go test -race -v ./...

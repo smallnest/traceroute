@@ -2,13 +2,17 @@
 
 A traceroute library written in Go.
 
-Must be run as sudo on OS X (and others)?
+[![Build Status](https://api.travis-ci.org/smallnest/traceroute.svg)](https://travis-ci.org/smallnest/traceroute)
+[![Go Report Card](https://goreportcard.com/badge/github.com/smallnest/traceroute)](https://goreportcard.com/report/github.com/smallnest/traceroute)
+[![GoDoc](https://godoc.org/github.com/smallnest/traceroute?status.svg)](https://godoc.org/github.com/smallnest/traceroute)
+
+Forked from [aeden/traceroute](https://github.com/aeden/traceroute).
 
 ## CLI App
 
 ```sh
-go build cmd/gotraceroute
-sudo ./gotraceroute example.com
+go install github.com/smallnest/traceroute/cmd/tracert
+sudo tracert example.com
 ```
 
 ## Library
