@@ -6,7 +6,7 @@ const (
 	DEFAULT_FIRST_HOP   = 1
 	DEFAULT_TIMEOUT_MS  = 500
 	DEFAULT_RETRIES     = 3
-	DEFAULT_PACKET_SIZE = 52
+	DEFAULT_PACKET_SIZE = 0
 )
 
 // DefaultOption provides a default opt.

@@ -96,13 +96,14 @@ func Trace(dest string, opt *Option, c ...chan Hop) (result TraceResult, err err
 		}
 
 		// Send a single null byte UDP packet
-		err = syscall.Sendto(sendSocket, []byte{0x0}, 0, &syscall.SockaddrInet4{Port: currentPort, Addr: destAddr})
+		sendData := make([]byte, opt.PacketSize())
+		err = syscall.Sendto(sendSocket, sendData, 0, &syscall.SockaddrInet4{Port: currentPort, Addr: destAddr})
 		if err != nil {
 			syscall.Close(recvSocket)
 			return result, err
 		}
 
-		p := make([]byte, opt.PacketSize())
+		p := make([]byte, opt.PacketSize()+52)
 		n, from, err := syscall.Recvfrom(recvSocket, p, 0)
 		syscall.Close(recvSocket)
 		syscall.Close(sendSocket)
