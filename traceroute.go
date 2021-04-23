@@ -36,6 +36,9 @@ func closeNotify(channels []chan Hop) {
 func Trace(dest string, opt *Option, c ...chan Hop) (result TraceResult, err error) {
 	result.Hops = []Hop{}
 	destAddr, err := destAddr(dest)
+	if err != nil {
+		return result, err
+	}
 	result.DestinationAddress = destAddr
 	socketAddr, err := socketAddr()
 	if err != nil {
@@ -45,6 +48,8 @@ func Trace(dest string, opt *Option, c ...chan Hop) (result TraceResult, err err
 	timeoutMs := (int64)(opt.TimeoutMs())
 	tv := syscall.NsecToTimeval(1000 * 1000 * timeoutMs)
 
+	port := opt.Port()
+
 	ttl := opt.FirstHop()
 	retry := 0
 	for {
@@ -52,7 +57,11 @@ func Trace(dest string, opt *Option, c ...chan Hop) (result TraceResult, err err
 		start := time.Now()
 
 		// Set up the socket to receive inbound packets
-		recvSocket, err := syscall.Socket(syscall.AF_INET, syscall.SOCK_RAW, syscall.IPPROTO_ICMP)
+		typ := syscall.SOCK_DGRAM
+		if opt.Privileged() {
+			typ = syscall.SOCK_RAW
+		}
+		recvSocket, err := syscall.Socket(syscall.AF_INET, typ, syscall.IPPROTO_ICMP)
 		if err != nil {
 			return result, err
 		}
@@ -73,14 +82,21 @@ func Trace(dest string, opt *Option, c ...chan Hop) (result TraceResult, err err
 			return result, err
 		}
 
+		// increment destination port for each probe
+		currentPort := port
+		port++
+		if port == 65535 {
+			port = DEFAULT_PORT
+		}
+
 		// Bind to the local socket to listen for ICMP packets
-		err = syscall.Bind(recvSocket, &syscall.SockaddrInet4{Port: opt.Port(), Addr: socketAddr})
+		err = syscall.Bind(recvSocket, &syscall.SockaddrInet4{Port: 0, Addr: socketAddr})
 		if err != nil {
 			return result, err
 		}
 
 		// Send a single null byte UDP packet
-		err = syscall.Sendto(sendSocket, []byte{0x0}, 0, &syscall.SockaddrInet4{Port: opt.Port(), Addr: destAddr})
+		err = syscall.Sendto(sendSocket, []byte{0x0}, 0, &syscall.SockaddrInet4{Port: currentPort, Addr: destAddr})
 		if err != nil {
 			syscall.Close(recvSocket)
 			return result, err

@@ -17,6 +17,7 @@ var DefaultOption = &Option{
 	timeoutMs:  DEFAULT_TIMEOUT_MS,
 	retries:    DEFAULT_RETRIES,
 	packetSize: DEFAULT_PACKET_SIZE,
+	privileged: true,
 }
 
 // TracrouteOption type
@@ -28,6 +29,7 @@ type Option struct {
 	retries     int
 	packetSize  int
 	resolveHost bool
+	privileged  bool
 }
 
 func (opt *Option) Port() int {
@@ -106,4 +108,16 @@ func (opt *Option) EnableResolveHost() {
 
 func (opt *Option) DisableResolveHost() {
 	opt.resolveHost = false
+}
+
+func (opt *Option) Privileged() bool {
+	return opt.privileged
+}
+
+func (opt *Option) EnablePrivileged() {
+	opt.privileged = true
+}
+
+func (opt *Option) DisablePrivileged() {
+	opt.privileged = false
 }

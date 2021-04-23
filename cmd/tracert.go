@@ -32,17 +32,18 @@ func main() {
 
 	flag.Parse()
 	host := flag.Arg(0)
-	options := traceroute.Option{}
-	options.SetRetries(*q - 1)
-	options.SetMaxHops(*m + 1)
-	options.SetFirstHop(*f)
+	opt := *traceroute.DefaultOption
+	opt.SetRetries(*q - 1)
+	opt.SetMaxHops(*m + 1)
+	opt.SetFirstHop(*f)
+	opt.DisablePrivileged()
 
 	ipAddr, err := net.ResolveIPAddr("ip", host)
 	if err != nil {
 		return
 	}
 
-	fmt.Printf("traceroute to %v (%v), %v hops max, %v byte packets\n", host, ipAddr, options.MaxHops(), options.PacketSize())
+	fmt.Printf("traceroute to %v (%v), %v hops max, %v byte packets\n", host, ipAddr, opt.MaxHops(), opt.PacketSize())
 
 	c := make(chan traceroute.Hop)
 	go func() {
@@ -56,7 +57,7 @@ func main() {
 		}
 	}()
 
-	_, err = traceroute.Trace(host, &options, c)
+	_, err = traceroute.Trace(host, &opt, c)
 	if err != nil {
 		fmt.Printf("Error: %v", err)
 	}

@@ -16,11 +16,14 @@ var testOption = &Option{
 	timeoutMs:  DEFAULT_TIMEOUT_MS,
 	retries:    1,
 	packetSize: 0,
+	privileged: false,
 }
+
+var testHost = "114.114.114.114"
 
 func TestTrace(t *testing.T) {
 	t.Log("Testing synchronous traceroute")
-	out, err := Trace("bing.com", testOption)
+	out, err := Trace(testHost, testOption)
 	if err == nil {
 		if len(out.Hops) == 0 {
 			t.Errorf("TestTraceroute failed. Expected at least one hop")
@@ -48,7 +51,7 @@ func TestTraceChannel(t *testing.T) {
 		}
 	}()
 
-	out, err := Trace("bing.com", testOption, c)
+	out, err := Trace(testHost, testOption, c)
 	if err == nil {
 		if len(out.Hops) == 0 {
 			t.Errorf("TestTracerouteChannel failed. Expected at least one hop")
