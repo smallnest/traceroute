@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"net"
+	"sync"
 
 	"github.com/smallnest/traceroute"
 )
@@ -45,8 +46,11 @@ func main() {
 
 	fmt.Printf("traceroute to %v (%v), %v hops max, %v byte packets\n", host, ipAddr, opt.MaxHops(), opt.PacketSize())
 
+	var wg sync.WaitGroup
+	wg.Add(1)
 	c := make(chan traceroute.Hop)
 	go func() {
+		defer wg.Done()
 		for {
 			hop, ok := <-c
 			if !ok {
@@ -61,4 +65,6 @@ func main() {
 	if err != nil {
 		fmt.Printf("Error: %v", err)
 	}
+
+	wg.Wait()
 }

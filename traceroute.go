@@ -125,7 +125,6 @@ func Trace(dest string, opt *Option, c ...chan Hop) (result TraceResult, err err
 
 			ttl += 1
 			retry = 0
-
 			if ttl > opt.MaxHops() || currAddr == destAddr {
 				closeNotify(c)
 				return result, nil
