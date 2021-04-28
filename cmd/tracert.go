@@ -23,7 +23,7 @@ func printHop(hop traceroute.Hop) {
 
 	isNewTTL := lastTTL != hop.TTL
 	if isNewTTL {
-		if hop.TTL == 1 {
+		if hop.TTL == *f {
 			fmt.Printf("%-3d ", hop.TTL)
 		} else {
 			fmt.Printf("\n%-3d ", hop.TTL)
@@ -49,11 +49,13 @@ func printHop(hop traceroute.Hop) {
 	}
 }
 
-func main() {
-	m := flag.Int("m", 32, `Set the max time-to-live (max number of hops) used in outgoing probe packets (default is 64)`)
-	f := flag.Int("f", traceroute.DEFAULT_FIRST_HOP, `Set the first used time-to-live, e.g. the first hop (default is 1)`)
-	q := flag.Int("q", 1, `Set the number of probes per "ttl" to nqueries (default is one probe).`)
+var (
+	m = flag.Int("m", 32, `Set the max time-to-live (max number of hops) used in outgoing probe packets (default is 64)`)
+	f = flag.Int("f", traceroute.DEFAULT_FIRST_HOP, `Set the first used time-to-live, e.g. the first hop (default is 1)`)
+	q = flag.Int("q", 1, `Set the number of probes per "ttl" to nqueries (default is one probe).`)
+)
 
+func main() {
 	flag.Parse()
 	host := flag.Arg(0)
 	opt := *traceroute.DefaultOption
