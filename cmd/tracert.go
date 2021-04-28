@@ -9,21 +9,44 @@ import (
 	"github.com/smallnest/traceroute"
 )
 
+var (
+	lastTTL  = 0
+	lastAddr = ""
+)
+
 func printHop(hop traceroute.Hop) {
 	addr := fmt.Sprintf("%v.%v.%v.%v", hop.Address[0], hop.Address[1], hop.Address[2], hop.Address[3])
 	hostOrAddr := addr
 	if hop.Host != "" {
 		hostOrAddr = hop.Host
 	}
-	if hop.Success {
-		fmt.Printf("%-3d %v (%v)  %v\n", hop.TTL, hostOrAddr, addr, hop.ElapsedTime)
-	} else {
-		fmt.Printf("%-3d *\n", hop.TTL)
-	}
-}
 
-func address(address [4]byte) string {
-	return fmt.Sprintf("%v.%v.%v.%v", address[0], address[1], address[2], address[3])
+	isNewTTL := lastTTL != hop.TTL
+	if isNewTTL {
+		if hop.TTL == 1 {
+			fmt.Printf("%-3d ", hop.TTL)
+		} else {
+			fmt.Printf("\n%-3d ", hop.TTL)
+		}
+
+		lastTTL = hop.TTL
+	}
+
+	if !hop.Success {
+		fmt.Print(" *")
+		return
+	}
+
+	if lastAddr == addr { // only print elapsed time
+		fmt.Printf(" %.2f ms", float64(hop.ElapsedTime.Microseconds())/1000)
+	} else {
+		lastAddr = addr
+		newLine := "\n    "
+		if isNewTTL {
+			newLine = ""
+		}
+		fmt.Printf("%s %v (%v)  %.2f ms", newLine, hostOrAddr, addr, float64(hop.ElapsedTime.Microseconds())/1000)
+	}
 }
 
 func main() {
@@ -34,7 +57,7 @@ func main() {
 	flag.Parse()
 	host := flag.Arg(0)
 	opt := *traceroute.DefaultOption
-	opt.SetRetries(*q - 1)
+	opt.SetNRequeries(*q - 1)
 	opt.SetMaxHops(*m + 1)
 	opt.SetFirstHop(*f)
 	opt.DisablePrivileged()

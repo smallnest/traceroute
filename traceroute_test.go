@@ -14,7 +14,7 @@ var testOption = &Option{
 	maxHops:    20,
 	firstHop:   1,
 	timeoutMs:  DEFAULT_TIMEOUT_MS,
-	retries:    1,
+	nqueries:   1,
 	packetSize: 0,
 	privileged: false,
 }

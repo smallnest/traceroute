@@ -51,8 +51,14 @@ func Trace(dest string, opt *Option, c ...chan Hop) (result TraceResult, err err
 	port := opt.Port()
 
 	ttl := opt.FirstHop()
-	retry := 0
+	nqueries := 0
 	for {
+		if nqueries > opt.nqueries {
+			ttl++
+			nqueries = 0
+		}
+		nqueries++
+
 		// log.Println("TTL: ", ttl)
 		start := time.Now()
 
@@ -124,20 +130,12 @@ func Trace(dest string, opt *Option, c ...chan Hop) (result TraceResult, err err
 
 			result.Hops = append(result.Hops, hop)
 
-			ttl += 1
-			retry = 0
 			if ttl > opt.MaxHops() || currAddr == destAddr {
 				closeNotify(c)
 				return result, nil
 			}
 		} else {
-			retry += 1
-			if retry > opt.Retries() {
-				notify(Hop{Success: false, TTL: ttl}, c)
-				ttl += 1
-				retry = 0
-			}
-
+			notify(Hop{Success: false, TTL: ttl}, c)
 			if ttl > opt.MaxHops() {
 				closeNotify(c)
 				return result, nil

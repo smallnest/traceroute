@@ -5,7 +5,7 @@ const (
 	DEFAULT_MAX_HOPS    = 64
 	DEFAULT_FIRST_HOP   = 1
 	DEFAULT_TIMEOUT_MS  = 500
-	DEFAULT_RETRIES     = 3
+	DEFAULT_NQUERIES    = 1
 	DEFAULT_PACKET_SIZE = 0
 )
 
@@ -15,7 +15,7 @@ var DefaultOption = &Option{
 	maxHops:    DEFAULT_MAX_HOPS,
 	firstHop:   DEFAULT_FIRST_HOP,
 	timeoutMs:  DEFAULT_TIMEOUT_MS,
-	retries:    DEFAULT_RETRIES,
+	nqueries:   DEFAULT_NQUERIES,
 	packetSize: DEFAULT_PACKET_SIZE,
 	privileged: true,
 }
@@ -26,7 +26,7 @@ type Option struct {
 	maxHops     int
 	firstHop    int
 	timeoutMs   int
-	retries     int
+	nqueries    int
 	packetSize  int
 	resolveHost bool
 	privileged  bool
@@ -76,15 +76,15 @@ func (opt *Option) SetTimeoutMs(timeoutMs int) {
 	opt.timeoutMs = timeoutMs
 }
 
-func (opt *Option) Retries() int {
-	if opt.retries == 0 {
-		opt.retries = DEFAULT_RETRIES
+func (opt *Option) NRequeries() int {
+	if opt.nqueries == 0 {
+		opt.nqueries = DEFAULT_NQUERIES
 	}
-	return opt.retries
+	return opt.nqueries
 }
 
-func (opt *Option) SetRetries(retries int) {
-	opt.retries = retries
+func (opt *Option) SetNRequeries(nqueries int) {
+	opt.nqueries = nqueries
 }
 
 func (opt *Option) PacketSize() int {
