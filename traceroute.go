@@ -113,9 +113,10 @@ func Trace(dest string, opt *Option, c ...chan Hop) (result TraceResult, err err
 
 		p := make([]byte, opt.PacketSize()+52)
 		n, from, err := syscall.Recvfrom(recvSocket, p, 0)
+		elapsed := time.Since(start)
 		syscall.Close(recvSocket)
 		syscall.Close(sendSocket)
-		elapsed := time.Since(start)
+
 		if err == nil {
 			currAddr := from.(*syscall.SockaddrInet4).Addr
 

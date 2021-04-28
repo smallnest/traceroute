@@ -54,7 +54,7 @@ var (
 	f          = flag.Int("f", traceroute.DEFAULT_FIRST_HOP, `Set the first used time-to-live, e.g. the first hop (default is 1)`)
 	q          = flag.Int("q", 1, `Set the number of probes per "ttl" to nqueries (default is one probe).`)
 	e          = flag.Bool("e", true, "Firewall evasion mode.  Use fixed destination ports for UDP and TCP probes.")
-	privileged = flag.Bool("P", false, `unprivileged or not`)
+	privileged = flag.Bool("P", true, `privileged or not`)
 )
 
 func main() {
@@ -65,9 +65,9 @@ func main() {
 	opt.SetMaxHops(*m)
 	opt.SetFirstHop(*f)
 	if *privileged {
-		opt.DisablePrivileged()
-	} else {
 		opt.EnablePrivileged()
+	} else {
+		opt.DisablePrivileged()
 	}
 	if *e {
 		opt.EnableFixedDstPort()
@@ -99,7 +99,7 @@ func main() {
 
 	_, err = traceroute.Trace(host, &opt, c)
 	if err != nil {
-		fmt.Printf("Error: %v", err)
+		fmt.Printf("Error: %v\n", err)
 	}
 
 	wg.Wait()
