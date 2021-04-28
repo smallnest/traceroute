@@ -50,7 +50,7 @@ func printHop(hop traceroute.Hop) {
 }
 
 func main() {
-	m := flag.Int("m", traceroute.DEFAULT_MAX_HOPS, `Set the max time-to-live (max number of hops) used in outgoing probe packets (default is 64)`)
+	m := flag.Int("m", 32, `Set the max time-to-live (max number of hops) used in outgoing probe packets (default is 64)`)
 	f := flag.Int("f", traceroute.DEFAULT_FIRST_HOP, `Set the first used time-to-live, e.g. the first hop (default is 1)`)
 	q := flag.Int("q", 1, `Set the number of probes per "ttl" to nqueries (default is one probe).`)
 
