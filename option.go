@@ -11,25 +11,27 @@ const (
 
 // DefaultOption provides a default opt.
 var DefaultOption = &Option{
-	port:       DEFAULT_PORT,
-	maxHops:    DEFAULT_MAX_HOPS,
-	firstHop:   DEFAULT_FIRST_HOP,
-	timeoutMs:  DEFAULT_TIMEOUT_MS,
-	nqueries:   DEFAULT_NQUERIES,
-	packetSize: DEFAULT_PACKET_SIZE,
-	privileged: true,
+	port:         DEFAULT_PORT,
+	maxHops:      DEFAULT_MAX_HOPS,
+	firstHop:     DEFAULT_FIRST_HOP,
+	timeoutMs:    DEFAULT_TIMEOUT_MS,
+	nqueries:     DEFAULT_NQUERIES,
+	packetSize:   DEFAULT_PACKET_SIZE,
+	privileged:   true,
+	fixedDstPort: false,
 }
 
 // TracrouteOption type
 type Option struct {
-	port        int
-	maxHops     int
-	firstHop    int
-	timeoutMs   int
-	nqueries    int
-	packetSize  int
-	resolveHost bool
-	privileged  bool
+	port         int
+	maxHops      int
+	firstHop     int
+	timeoutMs    int
+	nqueries     int
+	packetSize   int
+	resolveHost  bool
+	privileged   bool
+	fixedDstPort bool
 }
 
 func (opt *Option) Port() int {
@@ -120,4 +122,16 @@ func (opt *Option) EnablePrivileged() {
 
 func (opt *Option) DisablePrivileged() {
 	opt.privileged = false
+}
+
+func (opt *Option) FixedDstPort() bool {
+	return opt.fixedDstPort
+}
+
+func (opt *Option) EnableFixedDstPort() {
+	opt.fixedDstPort = true
+}
+
+func (opt *Option) DisableFixedDstPort() {
+	opt.fixedDstPort = false
 }

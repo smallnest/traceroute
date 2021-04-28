@@ -90,9 +90,11 @@ func Trace(dest string, opt *Option, c ...chan Hop) (result TraceResult, err err
 
 		// increment destination port for each probe
 		currentPort := port
-		port++
-		if port == 65535 {
-			port = DEFAULT_PORT
+		if !opt.fixedDstPort {
+			port++
+			if port == 65535 {
+				port = DEFAULT_PORT
+			}
 		}
 
 		// Bind to the local socket to listen for ICMP packets

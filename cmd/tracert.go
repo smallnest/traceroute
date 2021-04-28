@@ -53,6 +53,7 @@ var (
 	m          = flag.Int("m", 32, `Set the max time-to-live (max number of hops) used in outgoing probe packets (default is 64)`)
 	f          = flag.Int("f", traceroute.DEFAULT_FIRST_HOP, `Set the first used time-to-live, e.g. the first hop (default is 1)`)
 	q          = flag.Int("q", 1, `Set the number of probes per "ttl" to nqueries (default is one probe).`)
+	e          = flag.Bool("e", true, "Firewall evasion mode.  Use fixed destination ports for UDP and TCP probes.")
 	privileged = flag.Bool("P", false, `unprivileged or not`)
 )
 
@@ -67,6 +68,11 @@ func main() {
 		opt.DisablePrivileged()
 	} else {
 		opt.EnablePrivileged()
+	}
+	if *e {
+		opt.EnableFixedDstPort()
+	} else {
+		opt.DisableFixedDstPort()
 	}
 
 	ipAddr, err := net.ResolveIPAddr("ip", host)
