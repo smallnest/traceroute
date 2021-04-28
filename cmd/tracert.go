@@ -50,19 +50,24 @@ func printHop(hop traceroute.Hop) {
 }
 
 var (
-	m = flag.Int("m", 32, `Set the max time-to-live (max number of hops) used in outgoing probe packets (default is 64)`)
-	f = flag.Int("f", traceroute.DEFAULT_FIRST_HOP, `Set the first used time-to-live, e.g. the first hop (default is 1)`)
-	q = flag.Int("q", 1, `Set the number of probes per "ttl" to nqueries (default is one probe).`)
+	m          = flag.Int("m", 32, `Set the max time-to-live (max number of hops) used in outgoing probe packets (default is 64)`)
+	f          = flag.Int("f", traceroute.DEFAULT_FIRST_HOP, `Set the first used time-to-live, e.g. the first hop (default is 1)`)
+	q          = flag.Int("q", 1, `Set the number of probes per "ttl" to nqueries (default is one probe).`)
+	privileged = flag.Bool("P", false, `unprivileged or not`)
 )
 
 func main() {
 	flag.Parse()
 	host := flag.Arg(0)
 	opt := *traceroute.DefaultOption
-	opt.SetNRequeries(*q - 1)
-	opt.SetMaxHops(*m + 1)
+	opt.SetNRequeries(*q)
+	opt.SetMaxHops(*m)
 	opt.SetFirstHop(*f)
-	opt.DisablePrivileged()
+	if *privileged {
+		opt.DisablePrivileged()
+	} else {
+		opt.EnablePrivileged()
+	}
 
 	ipAddr, err := net.ResolveIPAddr("ip", host)
 	if err != nil {
