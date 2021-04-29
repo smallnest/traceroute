@@ -59,17 +59,13 @@ func Trace(dest string, opt *Option, c ...chan Hop) (result TraceResult, err err
 		}
 		nqueries++
 
-		// log.Println("TTL: ", ttl)
-		start := time.Now()
-
 		typ := syscall.SOCK_DGRAM
 		if opt.Privileged() {
 			typ = syscall.SOCK_RAW
 		}
-		_ = typ
 
 		// Set up the socket to receive inbound packets
-		recvSocket, err := syscall.Socket(syscall.AF_INET, syscall.SOCK_RAW, syscall.IPPROTO_ICMP)
+		recvSocket, err := syscall.Socket(syscall.AF_INET, typ, syscall.IPPROTO_ICMP)
 		if err != nil {
 			return result, err
 		}
@@ -94,8 +90,8 @@ func Trace(dest string, opt *Option, c ...chan Hop) (result TraceResult, err err
 		currentPort := port
 		if !opt.fixedDstPort {
 			port++
-			if port == 65535 {
-				port = DEFAULT_PORT
+			if port == 33535 {
+				port = opt.Port()
 			}
 		}
 
@@ -105,8 +101,10 @@ func Trace(dest string, opt *Option, c ...chan Hop) (result TraceResult, err err
 			return result, err
 		}
 
-		// Send a single null byte UDP packet
+		// Send a UDP packet
 		sendData := make([]byte, opt.PacketSize())
+		// log.Println("TTL: ", ttl)
+		start := time.Now()
 		err = syscall.Sendto(sendSocket, sendData, 0, &syscall.SockaddrInet4{Port: currentPort, Addr: destAddr})
 		if err != nil {
 			syscall.Close(recvSocket)

@@ -37,7 +37,7 @@ func printHop(hop traceroute.Hop) {
 		return
 	}
 
-	if lastAddr == addr { // only print elapsed time
+	if lastAddr == addr && !isNewTTL { // only print elapsed time
 		fmt.Printf(" %.2f ms", float64(hop.ElapsedTime.Microseconds())/1000)
 	} else {
 		lastAddr = addr
@@ -97,7 +97,7 @@ func main() {
 		}
 	}()
 
-	_, err = traceroute.Trace(host, &opt, c)
+	_, err = traceroute.TraceX(host, &opt, c)
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
 	}
