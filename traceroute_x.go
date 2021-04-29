@@ -52,8 +52,10 @@ func TraceX(dest string, opt *Option, c ...chan Hop) (result TraceResult, err er
 			return result, err
 		}
 
+		conn.SetDeadline(time.Now().Add(time.Duration(opt.TimeoutMs()) * time.Millisecond))
+
 		pconn := conn.IPv4PacketConn()
-		pconn.SetControlMessage(ipv4.FlagTTL|ipv4.FlagSrc|ipv4.FlagDst|ipv4.FlagInterface, true)
+		pconn.SetControlMessage(ipv4.FlagTTL, true)
 		err = pconn.SetTTL(ttl)
 		if err != nil {
 			return result, err
@@ -71,8 +73,9 @@ func TraceX(dest string, opt *Option, c ...chan Hop) (result TraceResult, err er
 		}
 		wb, err := wm.Marshal(nil)
 		if err != nil {
+			notify(Hop{Success: false, TTL: ttl}, c)
 			conn.Close()
-			return result, err
+			continue
 		}
 
 		var dst net.IPAddr
@@ -81,7 +84,9 @@ func TraceX(dest string, opt *Option, c ...chan Hop) (result TraceResult, err er
 		start := time.Now()
 		if opt.Privileged() {
 			if _, err := pconn.WriteTo(wb, nil, &dst); err != nil {
+				notify(Hop{Success: false, TTL: ttl}, c)
 				conn.Close()
+				continue
 			}
 		} else {
 			// increment destination port for each probe
@@ -93,8 +98,9 @@ func TraceX(dest string, opt *Option, c ...chan Hop) (result TraceResult, err er
 				}
 			}
 			if _, err := conn.WriteTo(wb, &net.UDPAddr{IP: net.ParseIP(dest), Port: currentPort}); err != nil {
+				notify(Hop{Success: false, TTL: ttl}, c)
 				conn.Close()
-				return result, err
+				continue
 			}
 		}
 
@@ -102,11 +108,15 @@ func TraceX(dest string, opt *Option, c ...chan Hop) (result TraceResult, err er
 		n, _, peer, err := pconn.ReadFrom(rb)
 		conn.Close()
 		if err != nil {
-			return result, err
+			notify(Hop{Success: false, TTL: ttl}, c)
+			conn.Close()
+			continue
 		}
 		rm, err := icmp.ParseMessage(1, rb[:n])
 		if err != nil {
-			return result, err
+			notify(Hop{Success: false, TTL: ttl}, c)
+			conn.Close()
+			continue
 		}
 		elapsed := time.Since(start)
 
