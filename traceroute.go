@@ -62,12 +62,14 @@ func Trace(dest string, opt *Option, c ...chan Hop) (result TraceResult, err err
 		// log.Println("TTL: ", ttl)
 		start := time.Now()
 
-		// Set up the socket to receive inbound packets
 		typ := syscall.SOCK_DGRAM
 		if opt.Privileged() {
 			typ = syscall.SOCK_RAW
 		}
-		recvSocket, err := syscall.Socket(syscall.AF_INET, typ, syscall.IPPROTO_ICMP)
+		_ = typ
+
+		// Set up the socket to receive inbound packets
+		recvSocket, err := syscall.Socket(syscall.AF_INET, syscall.SOCK_RAW, syscall.IPPROTO_ICMP)
 		if err != nil {
 			return result, err
 		}
