@@ -15,7 +15,10 @@ var (
 )
 
 func printHop(hop traceroute.Hop) {
-	addr := fmt.Sprintf("%v.%v.%v.%v", hop.Address[0], hop.Address[1], hop.Address[2], hop.Address[3])
+	var addr string
+	if hop.Address != nil {
+		addr = hop.Address.String()
+	}
 	hostOrAddr := addr
 	if hop.Host != "" {
 		hostOrAddr = hop.Host
@@ -97,7 +100,13 @@ func main() {
 		}
 	}()
 
-	_, err = traceroute.TraceX(host, &opt, c)
+	hostIP := net.ParseIP(host)
+	if hostIP.To4() != nil {
+		_, err = traceroute.Trace(host, &opt, c)
+	} else {
+		_, err = traceroute.Trace(host, &opt, c) // TODO
+	}
+
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
 	}

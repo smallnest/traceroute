@@ -1,14 +1,14 @@
 package traceroute
 
 import (
-	"fmt"
+	"net"
 	"time"
 )
 
 // Hop type
 type Hop struct {
 	Success     bool
-	Address     [4]byte
+	Address     net.Addr
 	Host        string
 	N           int
 	ElapsedTime time.Duration
@@ -16,7 +16,7 @@ type Hop struct {
 }
 
 func (hop *Hop) AddressString() string {
-	return fmt.Sprintf("%v.%v.%v.%v", hop.Address[0], hop.Address[1], hop.Address[2], hop.Address[3])
+	return hop.Address.String()
 }
 
 func (hop *Hop) String() string {
